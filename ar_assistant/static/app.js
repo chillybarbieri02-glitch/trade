@@ -1,9 +1,81 @@
 const money = (n) => `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+const PROVIDER_LABELS = { quickbooks: "QuickBooks", xero: "Xero" };
+
 function riskClass(score) {
   if (score >= 60) return "risk-high";
   if (score >= 30) return "risk-med";
   return "risk-low";
+}
+
+async function loadDataSourcePanel() {
+  const res = await fetch("/api/integrations/status");
+  const status = await res.json();
+
+  const buttons = Object.entries(status)
+    .map(([provider, info]) => {
+      const label = PROVIDER_LABELS[provider];
+      if (info.connected) {
+        return `
+          <span class="provider-group">
+            <span class="connected-pill">${label} connected</span>
+            <button class="sync-btn" data-provider="${provider}">Sync now</button>
+            <button class="disconnect-btn" data-provider="${provider}">Disconnect</button>
+          </span>`;
+      }
+      if (info.configured) {
+        return `<a class="connect-btn" href="/api/integrations/${provider}/authorize">Connect ${label}</a>`;
+      }
+      return `<span class="connect-btn disabled" title="Set ${provider.toUpperCase()}_CLIENT_ID/SECRET/REDIRECT_URI to enable">Connect ${label} (not configured)</span>`;
+    })
+    .join("");
+
+  document.getElementById("data-source").innerHTML = `
+    <div class="data-source-row">
+      ${buttons}
+      <label class="upload-btn">
+        Or import a CSV
+        <input type="file" id="csv-input" accept=".csv" hidden />
+      </label>
+    </div>`;
+
+  document.getElementById("csv-input").addEventListener("change", handleCsvUpload);
+  document.querySelectorAll(".sync-btn").forEach((btn) =>
+    btn.addEventListener("click", (e) => syncProvider(e.target.dataset.provider))
+  );
+  document.querySelectorAll(".disconnect-btn").forEach((btn) =>
+    btn.addEventListener("click", (e) => disconnectProvider(e.target.dataset.provider))
+  );
+}
+
+async function syncProvider(provider) {
+  const res = await fetch(`/api/integrations/${provider}/sync`, { method: "POST" });
+  const data = await res.json();
+  if (!res.ok) {
+    alert(data.detail || `Sync with ${PROVIDER_LABELS[provider]} failed`);
+    return;
+  }
+  alert(`${PROVIDER_LABELS[provider]} sync: ${data.created} new, ${data.updated} updated, ${data.skipped} skipped`);
+  refresh();
+}
+
+async function disconnectProvider(provider) {
+  await fetch(`/api/integrations/${provider}/disconnect`, { method: "POST" });
+  loadDataSourcePanel();
+}
+
+async function handleCsvUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch("/api/invoices/import", { method: "POST", body: form });
+  if (!res.ok) {
+    const err = await res.json();
+    alert(err.detail || "Import failed");
+  }
+  e.target.value = "";
+  refresh();
 }
 
 async function loadDashboard() {
@@ -72,23 +144,16 @@ document.getElementById("copy-draft").addEventListener("click", () => {
   navigator.clipboard.writeText(document.getElementById("draft-text").value);
 });
 
-document.getElementById("csv-input").addEventListener("change", async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const form = new FormData();
-  form.append("file", file);
-  const res = await fetch("/api/invoices/import", { method: "POST", body: form });
-  if (!res.ok) {
-    const err = await res.json();
-    alert(err.detail || "Import failed");
-  }
-  e.target.value = "";
-  refresh();
-});
-
 function refresh() {
+  loadDataSourcePanel();
   loadDashboard();
   loadInvoices();
+}
+
+const justConnected = new URLSearchParams(window.location.search).get("connected");
+if (justConnected) {
+  window.history.replaceState({}, "", window.location.pathname);
+  syncProvider(justConnected);
 }
 
 refresh();

@@ -1,14 +1,18 @@
 from datetime import date, datetime
 
+import requests
 from fastapi import FastAPI, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import ai_drafts, importer
+from . import ai_drafts, importer, oauth_store, sync
 from .database import get_conn, init_db
+from .integrations import oauth_state, quickbooks, xero
 from .risk import compute_risk
 
 app = FastAPI(title="CollectIQ - AI Accounts Receivable Assistant")
+
+PROVIDERS = {"quickbooks": quickbooks, "xero": xero}
 
 
 @app.on_event("startup")
@@ -94,6 +98,73 @@ async def upload_invoices(file: UploadFile):
     except ValueError as exc:
         raise HTTPException(400, str(exc))
     return result
+
+
+@app.get("/api/integrations/status")
+def integrations_status():
+    result = {}
+    for name, module in PROVIDERS.items():
+        result[name] = {
+            "configured": module.is_configured(),
+            "connected": oauth_store.get_connection(name) is not None,
+        }
+    return result
+
+
+@app.get("/api/integrations/{provider}/authorize")
+def integrations_authorize(provider: str):
+    module = PROVIDERS.get(provider)
+    if not module:
+        raise HTTPException(404, "Unknown provider")
+    if not module.is_configured():
+        raise HTTPException(
+            400, f"{provider} is not configured - set its client id/secret/redirect env vars first"
+        )
+    return RedirectResponse(module.get_authorize_url())
+
+
+@app.get("/api/integrations/quickbooks/callback")
+def quickbooks_callback(code: str, state: str, realmId: str):
+    if not oauth_state.consume(state):
+        raise HTTPException(400, "Invalid or expired OAuth state")
+    try:
+        quickbooks.exchange_code(code, realmId)
+    except requests.RequestException as exc:
+        raise HTTPException(502, f"Could not reach QuickBooks: {exc}")
+    return RedirectResponse("/?connected=quickbooks")
+
+
+@app.get("/api/integrations/xero/callback")
+def xero_callback(code: str, state: str):
+    if not oauth_state.consume(state):
+        raise HTTPException(400, "Invalid or expired OAuth state")
+    try:
+        xero.exchange_code(code)
+    except requests.RequestException as exc:
+        raise HTTPException(502, f"Could not reach Xero: {exc}")
+    return RedirectResponse("/?connected=xero")
+
+
+@app.post("/api/integrations/{provider}/sync")
+def integrations_sync(provider: str):
+    module = PROVIDERS.get(provider)
+    if not module:
+        raise HTTPException(404, "Unknown provider")
+    try:
+        records = module.fetch_open_invoice_records()
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc))
+    except requests.RequestException as exc:
+        raise HTTPException(502, f"Could not reach {provider}: {exc}")
+    return sync.upsert_records(records, update_existing=True)
+
+
+@app.post("/api/integrations/{provider}/disconnect")
+def integrations_disconnect(provider: str):
+    if provider not in PROVIDERS:
+        raise HTTPException(404, "Unknown provider")
+    oauth_store.delete_connection(provider)
+    return {"ok": True}
 
 
 @app.post("/api/invoices/{invoice_id}/draft")

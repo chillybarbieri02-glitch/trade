@@ -31,6 +31,41 @@ h1 { margin: 0; }
   cursor: pointer;
 }
 
+.data-source {
+  margin-bottom: 1.5rem;
+}
+.data-source-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.provider-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.connect-btn {
+  display: inline-block;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  color: inherit;
+}
+.connect-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.connected-pill {
+  display: inline-block;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: var(--risk-low);
+  color: white;
+  font-size: 0.85rem;
+}
+
 .cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
