@@ -1,0 +1,80 @@
+:root {
+  color-scheme: light dark;
+  --risk-high: #d64545;
+  --risk-med: #d99a2b;
+  --risk-low: #3a8f5f;
+  --border: #d9d9e0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+h1 { margin: 0; }
+.tagline { color: #888; margin: 0; flex: 1; }
+
+.upload-btn {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+.card .label { font-size: 0.8rem; color: #888; }
+.card .value { font-size: 1.6rem; font-weight: 600; }
+
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 0.5rem; border-bottom: 1px solid var(--border); }
+
+.risk-pill {
+  display: inline-block;
+  min-width: 2.2rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  color: white;
+  text-align: center;
+  font-weight: 600;
+}
+.risk-high { background: var(--risk-high); }
+.risk-med { background: var(--risk-med); }
+.risk-low { background: var(--risk-low); }
+
+button {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+  margin-right: 0.3rem;
+}
+
+dialog {
+  width: min(500px, 90vw);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+#draft-text { width: 100%; box-sizing: border-box; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem; }
