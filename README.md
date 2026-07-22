@@ -1,8 +1,33 @@
 # Pokémon Restock Bot
 
-Checks Pokémon Center, Target, Walmart, and Best Buy for in-stock Pokémon TCG
-products and posts alerts to a Discord webhook. Runs on a schedule via GitHub
-Actions, so there's nothing to host yourself.
+Checks retailers for in-stock Pokémon TCG products and posts alerts to a
+Discord webhook. Runs on a schedule via GitHub Actions, so there's nothing to
+host yourself.
+
+## Current retailer status (verified against live sites)
+
+| Retailer | Status | Why |
+|---|---|---|
+| Best Buy | **Works**, once you add an API key | Uses Best Buy's official Products API |
+| Pokémon Center | Blocked | Incapsula/Imperva bot-challenge page on every request |
+| Walmart | Blocked | PerimeterX bot-challenge ("Robot or human?") on every request |
+| Target | Blocked | The search page loads, but the client-side data API (RedSky) returns 403/410 to scripted requests |
+
+Only Best Buy is reliably automatable right now. Pokémon Center, Walmart, and
+Target all front their sites/APIs with dedicated anti-bot vendors that reject
+plain HTTP requests regardless of headers used. Getting past that would mean
+building headless-browser stealth automation specifically to evade that
+protection — that's not something this bot does. Their checkers are still in
+the code (`restock_bot/retailers/`) and run every cycle, but expect them to
+mostly log "search failed" warnings rather than find anything. If you want
+reliable coverage for those three, your best options are:
+
+- Sign up for the retailer's own "notify me when back in stock" feature
+  directly on the product page — this is the one channel bot protection
+  doesn't apply to, since it's a first-party feature.
+- Use an official API where one exists for a retailer you care about (e.g.
+  Amazon's Product Advertising API, if you have an Associates account) —
+  swap in a new checker module the same way `best_buy.py` is built.
 
 ## How it works
 
@@ -25,23 +50,10 @@ adding a new retailer or search term doesn't require touching the others.
    Repo → Settings → Secrets and variables → Actions → New repository secret
    → name `DISCORD_WEBHOOK_URL`, value your webhook URL.
 
-2. **Optional: Best Buy** — Best Buy blocks scraping, so this uses their
-   official Products API instead. Get a free key at
+2. **Best Buy** (the retailer that actually works): get a free key at
    https://developer.bestbuy.com/ and add it as a repo secret named
    `BESTBUY_API_KEY`. Without it, Best Buy checks are skipped (logged as a
    warning, not an error).
-
-3. **Optional: Target** — uses the same public search API target.com's own
-   frontend calls, with a default client key baked in. If Target requests
-   start failing, that key may have rotated; add a repo secret named
-   `TARGET_API_KEY` with a fresh value.
-
-4. **Enable the workflow to actually run on schedule** — GitHub only fires
-   `schedule` triggers for workflow files on the repo's *default* branch.
-   This bot was built on a feature branch, so merge it into the default
-   branch (or make this branch the default) before the cron schedule starts
-   firing. Until then, you can still trigger it manually from the Actions
-   tab ("Run workflow").
 
 ## Customizing what it searches for
 
@@ -58,15 +70,12 @@ export $(cat .env | xargs)
 python -m restock_bot.main
 ```
 
-## A note on fragility
+## Re-diagnosing a retailer
 
-Pokémon Center, Target, and Walmart are checked by parsing their public
-search pages/APIs rather than official product APIs (they don't offer one).
-Retailers change their site markup periodically, which can silently break a
-selector — if a retailer stops producing alerts, check the Actions run logs
-for warnings like "search failed" or "structure changed", and update the
-corresponding file in `restock_bot/retailers/`. Best Buy uses an official API
-instead specifically to avoid this problem.
+`restock_bot/debug_probe.py` (run via the "Debug Retailer Probe" workflow,
+Actions tab → Run workflow) fetches each retailer directly and prints status
+codes, redirect targets, and body snippets — use it if you suspect a
+retailer's blocking behavior changed, before guessing at fixes blind.
 
 Requests run once per search term per retailer every 15 minutes — intended
 for personal restock monitoring, not high-frequency polling.

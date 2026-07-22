@@ -1,7 +1,8 @@
-"""One-off diagnostic: fetch each retailer's search page/API with realistic
-headers and print status/headers/a body snippet, so we can see what a live
-GitHub Actions runner actually gets back (bot-block page, redirect, real
-HTML, etc.) without guessing blind.
+"""Re-diagnosis tool: fetch each retailer's search page with realistic
+headers and print status/redirects/a body snippet, so you can see what's
+actually happening (bot-block page, redirect, real HTML, etc.) before
+guessing at fixes blind. Run via the "Debug Retailer Probe" workflow
+(Actions tab -> Run workflow), or locally with `python -m restock_bot.debug_probe`.
 """
 
 import requests
@@ -15,33 +16,26 @@ HEADERS = {
     "Accept-Language": "en-US,en;q=0.9",
 }
 
-BASE_PARAMS = {
-    "key": "9f36aeafbe60771e321a7cc95a78140772ab3e96",
-    "channel": "WEB",
-    "count": 24,
-    "keyword": "pokemon booster box",
-    "platform": "desktop",
-    "visitor_id": "0000000000000000000000000000000000",
-}
-
-REDSKY_ENDPOINTS = {
-    "plp_search_v1": "https://redsky.target.com/redsky_aggregations/v1/web/plp_search_v1",
-    "plp_search_v2": "https://redsky.target.com/redsky_aggregations/v1/web/plp_search_v2",
-    "plp_search_v3": "https://redsky.target.com/redsky_aggregations/v1/web/plp_search_v3",
-    "plp_search_v4": "https://redsky.target.com/redsky_aggregations/v1/web/plp_search_v4",
-    "pdp_client_v1_probe": "https://redsky.target.com/redsky_aggregations/v1/web/pdp_client_v1",
+TARGETS = {
+    "pokemon_center": "https://www.pokemoncenter.com/search/index?q=pokemon%20booster%20box",
+    "target_page": "https://www.target.com/s?searchTerm=pokemon+booster+box",
+    "walmart": "https://www.walmart.com/search?q=pokemon%20booster%20box",
+    "best_buy_page": "https://www.bestbuy.com/site/searchpage.jsp?st=pokemon+booster+box",
 }
 
 
 def probe() -> None:
-    for name, url in REDSKY_ENDPOINTS.items():
+    for name, url in TARGETS.items():
         print(f"=== {name} ===")
         print("url:", url)
         try:
-            resp = requests.get(url, params=BASE_PARAMS, headers=HEADERS, timeout=20)
+            resp = requests.get(url, headers=HEADERS, timeout=20, allow_redirects=True)
             print("status:", resp.status_code)
+            print("final_url:", resp.url)
+            print("content-type:", resp.headers.get("content-type"))
             print("content-length:", len(resp.content))
-            print("body_snippet:", resp.text[:300].replace("\n", " "))
+            snippet = resp.text[:600].replace("\n", " ")
+            print("body_snippet:", snippet)
         except Exception as exc:
             print("ERROR:", repr(exc))
         print()
