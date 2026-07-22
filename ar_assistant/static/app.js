@@ -96,6 +96,10 @@ async function loadInvoices() {
   const res = await fetch("/api/invoices?status=open");
   const invoices = await res.json();
   const body = document.getElementById("invoice-body");
+
+  document.getElementById("invoice-table").hidden = invoices.length === 0;
+  document.getElementById("empty-state").hidden = invoices.length > 0;
+
   body.innerHTML = invoices
     .map(
       (inv) => `

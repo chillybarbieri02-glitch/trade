@@ -2,44 +2,63 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>CollectIQ - AI Accounts Receivable Assistant</title>
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header>
-    <h1>CollectIQ</h1>
-    <p class="tagline">AI-prioritized invoice collections for small businesses</p>
-  </header>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-mark">C</span>
+        <span class="brand-name">CollectIQ</span>
+      </div>
+      <p class="tagline">AI-prioritized invoice collections for small businesses</p>
+    </div>
+  </div>
 
-  <section id="data-source" class="data-source"></section>
+  <main>
+    <section id="data-source" class="data-source"></section>
 
-  <section id="dashboard" class="cards"></section>
+    <section id="dashboard" class="cards"></section>
 
-  <section>
-    <h2>Open invoices, ranked by collection risk</h2>
-    <table id="invoice-table">
-      <thead>
-        <tr>
-          <th>Risk</th>
-          <th>Customer</th>
-          <th>Invoice #</th>
-          <th>Amount</th>
-          <th>Due date</th>
-          <th>Days late</th>
-          <th>Stage</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="invoice-body"></tbody>
-    </table>
-  </section>
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Open invoices</h2>
+        <span class="panel-subtitle">Ranked by collection risk - highest first</span>
+      </div>
+      <div class="table-scroll">
+        <table id="invoice-table">
+          <thead>
+            <tr>
+              <th>Risk</th>
+              <th>Customer</th>
+              <th>Invoice #</th>
+              <th>Amount</th>
+              <th>Due date</th>
+              <th>Days late</th>
+              <th>Stage</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="invoice-body"></tbody>
+        </table>
+      </div>
+      <div id="empty-state" class="empty-state" hidden>
+        <p>No open invoices yet.</p>
+        <p class="empty-state-hint">Connect QuickBooks/Xero or import a CSV above to get started.</p>
+      </div>
+    </section>
+  </main>
 
   <dialog id="draft-dialog">
-    <h3 id="draft-title"></h3>
+    <div class="dialog-header">
+      <h3 id="draft-title"></h3>
+      <button id="close-dialog" class="icon-btn" aria-label="Close">&times;</button>
+    </div>
     <textarea id="draft-text" rows="10"></textarea>
     <div class="dialog-actions">
-      <button id="copy-draft">Copy</button>
-      <button id="close-dialog">Close</button>
+      <button id="copy-draft" class="btn-primary">Copy to clipboard</button>
     </div>
   </dialog>
 
