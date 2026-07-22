@@ -26,6 +26,15 @@ CREATE TABLE IF NOT EXISTS invoices (
     reminders_sent INTEGER NOT NULL DEFAULT 0,
     last_stage TEXT NOT NULL DEFAULT 'not_due'
 );
+
+CREATE TABLE IF NOT EXISTS oauth_connections (
+    provider TEXT PRIMARY KEY,
+    access_token TEXT NOT NULL,
+    refresh_token TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    tenant_id TEXT,
+    connected_at TEXT NOT NULL
+);
 """
 
 
@@ -49,5 +58,8 @@ def init_db():
 def reset_db():
     """Used by tests to start from a clean slate."""
     with get_conn() as conn:
-        conn.executescript("DROP TABLE IF EXISTS invoices; DROP TABLE IF EXISTS customers;")
+        conn.executescript(
+            "DROP TABLE IF EXISTS invoices; DROP TABLE IF EXISTS customers; "
+            "DROP TABLE IF EXISTS oauth_connections;"
+        )
         conn.executescript(SCHEMA)
