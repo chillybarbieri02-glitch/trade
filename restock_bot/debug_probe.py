@@ -16,16 +16,7 @@ HEADERS = {
 }
 
 TARGETS = {
-    "pokemon_center": "https://www.pokemoncenter.com/search/index?q=pokemon%20booster%20box",
-    "target_redsky_v1": (
-        "https://redsky.target.com/redsky_aggregations/v1/web/plp_search_v1"
-        "?key=9f36aeafbe60771e321a7cc95a78140772ab3e96&channel=WEB&count=24"
-        "&default_purchasability_filter=true&keyword=pokemon+booster+box"
-        "&platform=desktop&visitor_id=0000000000000000000000000000000000"
-    ),
     "target_page": "https://www.target.com/s?searchTerm=pokemon+booster+box",
-    "walmart": "https://www.walmart.com/search?q=pokemon%20booster%20box",
-    "best_buy_page": "https://www.bestbuy.com/site/searchpage.jsp?st=pokemon+booster+box",
 }
 
 
@@ -36,11 +27,28 @@ def probe() -> None:
         try:
             resp = requests.get(url, headers=HEADERS, timeout=20, allow_redirects=True)
             print("status:", resp.status_code)
-            print("final_url:", resp.url)
-            print("content-type:", resp.headers.get("content-type"))
             print("content-length:", len(resp.content))
-            snippet = resp.text[:600].replace("\n", " ")
-            print("body_snippet:", snippet)
+
+            has_next_data = "__NEXT_DATA__" in resp.text
+            print("has __NEXT_DATA__ script:", has_next_data)
+
+            if has_next_data:
+                start = resp.text.index("__NEXT_DATA__")
+                # Print a window around the script tag so we can see its
+                # opening structure without dumping the whole (huge) blob.
+                print("snippet_around_next_data:", resp.text[start : start + 400])
+
+            tcin_count = resp.text.count('"tcin"')
+            print("occurrences of \"tcin\":", tcin_count)
+            if tcin_count:
+                idx = resp.text.index('"tcin"')
+                print("snippet_around_first_tcin:", resp.text[max(0, idx - 200) : idx + 400])
+
+            api_key_count = resp.text.count("redsky.target.com")
+            print("occurrences of redsky.target.com:", api_key_count)
+            if api_key_count:
+                idx = resp.text.index("redsky.target.com")
+                print("snippet_around_redsky_ref:", resp.text[max(0, idx - 300) : idx + 100])
         except Exception as exc:
             print("ERROR:", repr(exc))
         print()
