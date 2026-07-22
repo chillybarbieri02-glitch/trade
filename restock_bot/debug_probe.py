@@ -15,40 +15,33 @@ HEADERS = {
     "Accept-Language": "en-US,en;q=0.9",
 }
 
-TARGETS = {
-    "target_page": "https://www.target.com/s?searchTerm=pokemon+booster+box",
+BASE_PARAMS = {
+    "key": "9f36aeafbe60771e321a7cc95a78140772ab3e96",
+    "channel": "WEB",
+    "count": 24,
+    "keyword": "pokemon booster box",
+    "platform": "desktop",
+    "visitor_id": "0000000000000000000000000000000000",
+}
+
+REDSKY_ENDPOINTS = {
+    "plp_search_v1": "https://redsky.target.com/redsky_aggregations/v1/web/plp_search_v1",
+    "plp_search_v2": "https://redsky.target.com/redsky_aggregations/v1/web/plp_search_v2",
+    "plp_search_v3": "https://redsky.target.com/redsky_aggregations/v1/web/plp_search_v3",
+    "plp_search_v4": "https://redsky.target.com/redsky_aggregations/v1/web/plp_search_v4",
+    "pdp_client_v1_probe": "https://redsky.target.com/redsky_aggregations/v1/web/pdp_client_v1",
 }
 
 
 def probe() -> None:
-    for name, url in TARGETS.items():
+    for name, url in REDSKY_ENDPOINTS.items():
         print(f"=== {name} ===")
         print("url:", url)
         try:
-            resp = requests.get(url, headers=HEADERS, timeout=20, allow_redirects=True)
+            resp = requests.get(url, params=BASE_PARAMS, headers=HEADERS, timeout=20)
             print("status:", resp.status_code)
             print("content-length:", len(resp.content))
-
-            has_next_data = "__NEXT_DATA__" in resp.text
-            print("has __NEXT_DATA__ script:", has_next_data)
-
-            if has_next_data:
-                start = resp.text.index("__NEXT_DATA__")
-                # Print a window around the script tag so we can see its
-                # opening structure without dumping the whole (huge) blob.
-                print("snippet_around_next_data:", resp.text[start : start + 400])
-
-            tcin_count = resp.text.count('"tcin"')
-            print("occurrences of \"tcin\":", tcin_count)
-            if tcin_count:
-                idx = resp.text.index('"tcin"')
-                print("snippet_around_first_tcin:", resp.text[max(0, idx - 200) : idx + 400])
-
-            api_key_count = resp.text.count("redsky.target.com")
-            print("occurrences of redsky.target.com:", api_key_count)
-            if api_key_count:
-                idx = resp.text.index("redsky.target.com")
-                print("snippet_around_redsky_ref:", resp.text[max(0, idx - 300) : idx + 100])
+            print("body_snippet:", resp.text[:300].replace("\n", " "))
         except Exception as exc:
             print("ERROR:", repr(exc))
         print()
