@@ -4,10 +4,6 @@ Checks retailers for in-stock Pokémon TCG products and posts alerts to a
 Discord webhook. Runs on a schedule via GitHub Actions, so there's nothing to
 host yourself.
 
-> This repo also contains [`ar_assistant/`](ar_assistant/README.md), an
-> unrelated project: an AI accounts-receivable assistant for small
-> businesses. See its own README for setup.
-
 ## Current retailer status (verified against live sites)
 
 | Retailer | Status | Why |

@@ -1,9 +1,0 @@
-customer_name,contact_name,email,invoice_number,amount,issued_date,due_date
-Blue Ridge Landscaping,Tom Ferris,tom@blueridgelandscaping.com,INV-1041,4200.00,2026-05-01,2026-05-31
-Blue Ridge Landscaping,Tom Ferris,tom@blueridgelandscaping.com,INV-1058,1800.00,2026-06-10,2026-07-10
-Harbor Point Dental,Priya Shah,priya@harborpointdental.com,INV-2091,950.00,2026-06-20,2026-07-05
-Northside Auto Repair,Mike Delgado,mike@northsideauto.com,INV-3312,3100.00,2026-04-15,2026-05-15
-Northside Auto Repair,Mike Delgado,mike@northsideauto.com,INV-3340,2650.00,2026-06-01,2026-07-01
-Crestview Catering,Angela Ruiz,angela@crestviewcatering.com,INV-4477,12800.00,2026-06-25,2026-07-15
-Lakeside Print Shop,Dana Wu,dana@lakesideprint.com,INV-5502,540.00,2026-07-10,2026-07-24
-Summit Legal Services,Robert Klein,robert@summitlegal.com,INV-6120,6300.00,2026-03-01,2026-03-31
